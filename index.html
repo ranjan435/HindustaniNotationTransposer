@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hindustani Notation Transposer</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(160deg, #020617, #0f172a 45%, #111827);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 48px;
+    }
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      line-height: 1.1;
+      margin: 0 0 10px;
+    }
+    .sub {
+      color: var(--muted);
+      max-width: 840px;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+    }
+    .card {
+      background: rgba(17,24,39,0.9);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+      backdrop-filter: blur(8px);
+    }
+    label {
+      display: block;
+      margin: 0 0 8px;
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    textarea, select {
+      width: 100%;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font: inherit;
+    }
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 15px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    .primary { background: var(--accent); color: #082f49; }
+    .secondary { background: #1e293b; color: var(--text); border: 1px solid var(--border); }
+    .output {
+      white-space: pre-wrap;
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      min-height: 260px;
+      padding: 14px;
+      line-height: 1.65;
+      font-size: 1.02rem;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 12px;
+      background: rgba(56,189,248,0.12);
+      color: #bae6fd;
+      font-size: 0.92rem;
+      margin: 0 8px 8px 0;
+      border: 1px solid rgba(56,189,248,0.22);
+    }
+    .muted { color: var(--muted); }
+    .small { font-size: 0.92rem; }
+    .section-title { margin: 0 0 14px; font-size: 1.15rem; }
+    .examples {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .example-btn {
+      width: 100%;
+      text-align: left;
+      background: #0b1220;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    code { color: #bae6fd; }
+    @media (max-width: 900px) {
+      .grid, .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Hindustani Notation Transposer</h1>
+    <p class="sub">
+      Paste a melody written in sargam, choose the source scale and target scale, and the notation is transposed automatically.
+      The output always stays in Hindustani classical notes like <code>S R G M P D N</code>, including komal and tivra swaras.
+    </p>
+
+    <div class="grid">
+      <section class="card">
+        <h2 class="section-title">Input</h2>
+
+        <div class="row">
+          <div>
+            <label for="sourceScale">Source scale / tonic</label>
+            <select id="sourceScale"></select>
+          </div>
+          <div>
+            <label for="targetScale">Target scale / tonic</label>
+            <select id="targetScale"></select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="mode">Transposition mode</label>
+            <select id="mode">
+              <option value="same-pattern">Keep same sargam pattern</option>
+              <option value="shift-sargam">Shift notation to new Hindustani notes</option>
+            </select>
+          </div>
+          <div>
+            <label for="displayStyle">Output style</label>
+            <select id="displayStyle">
+              <option value="short">Short: S R G M P D N</option>
+              <option value="full">Full: Sa Re Ga Ma Pa Dha Ni</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="inputText">Song notation</label>
+        <textarea id="inputText" spellcheck="false" placeholder="Examples:
+S R G M | P D N S'
+S, R, G, M P D N S'
+S n D P | M G R S
+S. R. G. M. | P D N S'"></textarea>
+
+        <div class="buttons">
+          <button class="primary" id="transposeBtn">Transpose notation</button>
+          <button class="secondary" id="copyBtn">Copy output</button>
+          <button class="secondary" id="swapBtn">Swap scales</button>
+          <button class="secondary" id="clearBtn">Clear</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">Output</h2>
+        <div class="pill" id="summaryPill">Ready</div>
+        <div class="output" id="outputText">Your transposed Hindustani notation will appear here.</div>
+
+        <div style="margin-top: 16px;">
+          <div class="small muted" style="margin-bottom: 8px;">Supported notation</div>
+          <div>
+            <span class="pill">S R G M P D N</span>
+            <span class="pill">r g d n = komal</span>
+            <span class="pill">m = shuddha Ma</span>
+            <span class="pill">M = tivra Ma</span>
+            <span class="pill">Octave markers: <code>.</code> and <code>'</code></span>
+          </div>
+        </div>
+
+        <div class="examples">
+          <button class="example-btn" data-example="1">Load basic example</button>
+          <button class="example-btn" data-example="2">Load flute-style example</button>
+          <button class="example-btn" data-example="3">Load komal swara example</button>
+        </div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top: 18px;">
+      <h2 class="section-title">How it works</h2>
+      <p class="muted small">
+        <strong>Keep same sargam pattern</strong> keeps the notation exactly as scale degrees. Example: <code>S R G M</code> stays <code>S R G M</code>
+        when changing from C flute to D flute, because you are still thinking relative to the new Sa.
+      </p>
+      <p class="muted small">
+        <strong>Shift notation to new Hindustani notes</strong> is useful when you want the written swaras themselves to change.
+        Example: moving from C to B shifts each written swara down by one semitone, so <code>S R G M</code> becomes <code>N S r g</code>.
+      </p>
+      <p class="muted small">
+        Punctuation, spaces, bar lines, commas, dashes, and line breaks are preserved as much as possible.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    const NOTE_TO_PC = {
+      "B#": 0, "C": 0,
+      "C#": 1, "Db": 1,
+      "D": 2,
+      "D#": 3, "Eb": 3,
+      "E": 4, "Fb": 4,
+      "E#": 5, "F": 5,
+      "F#": 6, "Gb": 6,
+      "G": 7,
+      "G#": 8, "Ab": 8,
+      "A": 9,
+      "A#": 10, "Bb": 10,
+      "B": 11, "Cb": 11
+    };
+
+    const SARGAM_TO_SEMITONE = {
+      "S": 0,
+      "r": 1,
+      "R": 2,
+      "g": 3,
+      "G": 4,
+      "m": 5,
+      "M": 6,
+      "P": 7,
+      "d": 8,
+      "D": 9,
+      "n": 10,
+      "N": 11
+    };
+
+    const SEMITONE_TO_SARGAM = ["S", "r", "R", "g", "G", "m", "M", "P", "d", "D", "n", "N"];
+    const FULL_NAMES = {
+      "S": "Sa",
+      "r": "re",
+      "R": "Re",
+      "g": "ga",
+      "G": "Ga",
+      "m": "Ma",
+      "M": "Ma^",
+      "P": "Pa",
+      "d": "dha",
+      "D": "Dha",
+      "n": "ni",
+      "N": "Ni"
+    };
+
+    const scaleOptions = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
+    const sourceScale = document.getElementById("sourceScale");
+    const targetScale = document.getElementById("targetScale");
+    const mode = document.getElementById("mode");
+    const displayStyle = document.getElementById("displayStyle");
+    const inputText = document.getElementById("inputText");
+    const outputText = document.getElementById("outputText");
+    const summaryPill = document.getElementById("summaryPill");
+
+    function fillScales() {
+      for (const note of scaleOptions) {
+        sourceScale.add(new Option(note, note));
+        targetScale.add(new Option(note, note));
+      }
+      sourceScale.value = "C";
+      targetScale.value = "B";
+    }
+
+    function renderSwara(swara, octaveMarks) {
+      if (displayStyle.value === "full") {
+        return (FULL_NAMES[swara] || swara) + octaveMarks;
+      }
+      return swara + octaveMarks;
+    }
+
+    function transposeSargam(raw) {
+      const sourcePc = NOTE_TO_PC[sourceScale.value];
+      const targetPc = NOTE_TO_PC[targetScale.value];
+      const shift = ((targetPc - sourcePc) % 12 + 12) % 12;
+
+      if (mode.value === "same-pattern") {
+        const result = raw.replace(/(S|r|R|g|G|m|M|P|d|D|n|N)([.'`]*)/g, (_, swara, octaveMarks) => renderSwara(swara, octaveMarks));
+        summaryPill.textContent = `Same pattern kept: ${sourceScale.value} -> ${targetScale.value}`;
+        return result;
+      }
+
+      const result = raw.replace(/(S|r|R|g|G|m|M|P|d|D|n|N)([.'`]*)/g, (_, swara, octaveMarks) => {
+        const sourceSemitone = SARGAM_TO_SEMITONE[swara];
+        const newSemitone = (sourceSemitone + shift) % 12;
+        const newSwara = SEMITONE_TO_SARGAM[newSemitone];
+        return renderSwara(newSwara, octaveMarks);
+      });
+      summaryPill.textContent = `Shifted Hindustani notes: ${sourceScale.value} -> ${targetScale.value}`;
+      return result;
+    }
+
+    function transpose() {
+      const raw = inputText.value;
+      if (!raw.trim()) {
+        outputText.textContent = "Your transposed Hindustani notation will appear here.";
+        summaryPill.textContent = "Enter notation to begin";
+        return;
+      }
+      outputText.textContent = transposeSargam(raw);
+    }
+
+    function loadExample(id) {
+      sourceScale.value = "C";
+      displayStyle.value = "short";
+
+      if (id === "1") {
+        targetScale.value = "B";
+        mode.value = "shift-sargam";
+        inputText.value = "S R G M | P D N S'\nS' N D P | M G R S";
+      } else if (id === "2") {
+        targetScale.value = "D";
+        mode.value = "shift-sargam";
+        inputText.value = "S, R, G, M | P D N S'\nP M G R | S";
+      } else {
+        targetScale.value = "B";
+        mode.value = "shift-sargam";
+        inputText.value = "S r G M | P d N S'\nS' N d P | M G r S";
+      }
+      transpose();
+    }
+
+    document.getElementById("transposeBtn").addEventListener("click", transpose);
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      const text = outputText.textContent;
+      if (!text || text === "Your transposed Hindustani notation will appear here.") return;
+      await navigator.clipboard.writeText(text);
+      summaryPill.textContent = "Output copied";
+    });
+    document.getElementById("swapBtn").addEventListener("click", () => {
+      const a = sourceScale.value;
+      sourceScale.value = targetScale.value;
+      targetScale.value = a;
+      transpose();
+    });
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      inputText.value = "";
+      outputText.textContent = "Your transposed Hindustani notation will appear here.";
+      summaryPill.textContent = "Cleared";
+    });
+
+    [sourceScale, targetScale, mode, displayStyle].forEach(el => el.addEventListener("change", transpose));
+    inputText.addEventListener("input", transpose);
+    document.querySelectorAll("[data-example]").forEach(btn => {
+      btn.addEventListener("click", () => loadExample(btn.dataset.example));
+    });
+
+    fillScales();
+    transpose();
+  </script>
+</body>
+</html>
